@@ -1,0 +1,484 @@
+}<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Para mi Yova Eterna ❤️</title>
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Nunito:wght@400;700&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <style>
+        :root {
+            --primary: #ff4d6d;
+            --secondary: #ff758f;
+            --accent: #c9184a;
+            --text: #590d22;
+            --glass: rgba(255, 255, 255, 0.75);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: linear-gradient(135deg, #ffafbd 0%, #ffc3a0 100%);
+            min-height: 100vh;
+            font-family: 'Nunito', sans-serif;
+            overflow: hidden; /* Evitar scroll mientras se juega */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text);
+        }
+
+        /* --- FONDO ANIMADO DE CORAZONES --- */
+        .bg-hearts {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        
+        .heart-float {
+            position: absolute;
+            color: rgba(255, 255, 255, 0.6);
+            animation: floatUp linear infinite;
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(110vh) scale(0.5); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateY(-10vh) scale(1.2); opacity: 0; }
+        }
+
+        /* --- CONTENEDOR PRINCIPAL (Glassmorphism) --- */
+        .card-container {
+            background: var(--glass);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-radius: 25px;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 15px 35px rgba(255, 77, 109, 0.25);
+            width: 90%;
+            max-width: 500px;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            z-index: 10;
+            transition: all 0.5s ease;
+        }
+
+        /* Ocultar secciones con transición suave */
+        .step {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.8s ease-in-out;
+        }
+        .step.active {
+            display: block;
+            opacity: 1;
+            animation: fadeIn 0.8s forwards;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- TIPOGRAFÍA Y BOTONES --- */
+        h1 {
+            font-family: 'Great Vibes', cursive;
+            font-size: 3.5rem;
+            color: var(--accent);
+            margin-bottom: 10px;
+            line-height: 1.2;
+            text-shadow: 2px 2px 4px rgba(255,255,255,0.5);
+        }
+
+        h2 { font-family: 'Dancing Script', cursive; font-size: 2rem; color: var(--primary); margin-bottom: 15px; }
+        
+        p { font-size: 1.1rem; line-height: 1.6; margin-bottom: 20px; }
+
+        .btn {
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            padding: 12px 35px;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(255, 77, 109, 0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+
+        .btn:hover { transform: scale(1.05); box-shadow: 0 8px 20px rgba(255, 77, 109, 0.6); }
+        .btn:active { transform: scale(0.95); }
+
+        /* --- JUEGO 1: Clicker --- */
+        #click-area {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 5;
+            display: none;
+        }
+        .click-target {
+            position: absolute; font-size: 3.5rem; cursor: pointer; user-select: none;
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
+
+        /* --- JUEGO 2: Memoria --- */
+        .memory-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 20px auto;
+        }
+        .mem-card {
+            background: var(--primary); height: 80px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2rem; cursor: pointer; transition: transform 0.6s;
+            transform-style: preserve-3d; position: relative;
+        }
+        .mem-card.flipped { transform: rotateY(180deg); background: white; border: 2px solid var(--primary); }
+        .mem-card span { display: none; }
+        .mem-card.flipped span { display: block; transform: rotateY(180deg); }
+
+        /* --- JUEGO 3: Unión (Responsivo) --- */
+        .union-track {
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(255,255,255,0.5); border-radius: 50px;
+            padding: 10px 20px; margin-top: 20px; position: relative;
+            height: 80px; border: 2px dashed var(--secondary);
+        }
+        .avatar { font-size: 2.5rem; position: absolute; transition: left 0.5s ease; left: 10px; z-index: 5; }
+        .checkpoint { font-size: 1.5rem; opacity: 0.3; transition: 0.3s; cursor: pointer; z-index: 2; }
+        .checkpoint.active { opacity: 1; animation: heartbeat 1s infinite; transform: scale(1.2); }
+        .checkpoint.done { opacity: 1; filter: grayscale(0); transform: scale(1); }
+        
+        @keyframes heartbeat { 0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
+
+        /* --- AUDIO CONTROL --- */
+        .music-btn {
+            position: fixed; bottom: 20px; right: 20px;
+            background: white; width: 45px; height: 45px;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); cursor: pointer; z-index: 100; font-size: 1.2rem;
+            animation: spin 5s linear infinite;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .paused { animation-play-state: paused; opacity: 0.7; }
+
+    </style>
+</head>
+<body>
+
+    <div class="bg-hearts" id="bg-hearts"></div>
+
+    <div class="music-btn paused" id="music-control" onclick="toggleMusic()">🎵</div>
+    <audio id="bg-music" loop>
+        <source src="https://cdn.pixabay.com/download/audio/2022/03/24/audio_097f4c000e.mp3?filename=piano-moment-11634.mp3" type="audio/mpeg">
+    </audio>
+
+    <div id="step-1" class="card-container step active">
+        <h1>Para mi Yova</h1>
+        <p style="font-style: italic;">"Levántate, oh amiga mía, hermosa mía, y ven."<br><b>- Cantares 2:10 ✝</b></p>
+        <div style="font-size: 4rem; margin: 20px 0;">🐮❤️🐷</div>
+        <p>He creado un pequeño universo para nosotros.<br>¿Estás lista para entrar?</p>
+        <button class="btn" onclick="nextStep(2)">Sí, quiero entrar ❤️</button>
+    </div>
+
+    <div id="step-2" class="step" style="width: 100%; height: 100vh; position: relative;">
+        <div style="position: fixed; top: 30px; left: 50%; transform: translateX(-50%); background: white; padding: 10px 30px; border-radius: 30px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); z-index: 20;">
+            <h3 style="margin: 0; color: var(--accent);">Llenando de Amor: <span id="score">0</span>%</h3>
+        </div>
+        <div id="game-layer" style="width: 100%; height: 100%;"></div>
+        <div style="position: absolute; bottom: 50px; width: 100%; text-align: center; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.3); pointer-events: none;">
+            ¡Atrapa los corazones y animalitos!
+        </div>
+    </div>
+
+    <div id="step-3" class="card-container step">
+        <h2>Mi Confesión...</h2>
+        <div style="text-align: left; max-height: 300px; overflow-y: auto; padding-right: 10px;">
+            <p><b>Mi querida Yova,</b></p>
+            <p>Tú eres la culpable de que mis noches sean tan hermosas. Gracias a ti, me olvido de mis problemas y encuentro paz. Eres mi refugio, mi lugar favorito en el mundo.</p>
+            <p>En este San Valentín, no solo celebro el amor, celebro que <b>existes</b> y que estás conmigo.</p>
+            <p>Pero espera... hay secretos guardados para ti.</p>
+        </div>
+        <br>
+        <button class="btn" onclick="nextStep(4)">Ver Secretos 💌</button>
+    </div>
+
+    <div id="step-4" class="card-container step">
+        <h2>Encuentra las parejas</h2>
+        <p>Une lo que sentimos...</p>
+        <div class="memory-grid" id="memory-board">
+            </div>
+        <p id="memory-msg" style="height: 20px; color: var(--accent); font-weight: bold;"></p>
+    </div>
+
+    <div id="step-5" class="card-container step">
+        <h2>El Camino Juntos</h2>
+        <p>Ayuda a la vaquita a llegar a su cerdito. <br>Toca los corazones que palpitan.</p>
+        
+        <div class="union-track">
+            <div id="cow-avatar" class="avatar">🐮</div>
+            <div style="flex-grow: 1;"></div> <div class="checkpoint" id="cp-1" onclick="moveCow(1)">❤️</div>
+            <div style="flex-grow: 1;"></div>
+            <div class="checkpoint" id="cp-2" onclick="moveCow(2)">❤️</div>
+            <div style="flex-grow: 1;"></div>
+            <div class="checkpoint" id="cp-3" onclick="moveCow(3)">🐷</div>
+        </div>
+    </div>
+
+    <div id="step-6" class="card-container step">
+        <h1>¡Feliz San Valentín!</h1>
+        <p>Lo lograste, completaste mis sentimientos. <br>Gracias por ser parte de mi, mi niña y mi tierra prometida.</p>
+        <div style="font-size: 5rem; animation: heartbeat 1.5s infinite;">🥰</div>
+        <br>
+        <p style="font-size: 0.9rem; color: #777;">Hecho con todo mi código y corazón para ti.</p>
+        <button class="btn" onclick="location.reload()">Ver de nuevo 🔄</button>
+    </div>
+
+    <script>
+        // --- MOTOR DE SONIDO (NUEVO) ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSfx(freq, type, duration) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        // --- CONFIGURACIÓN Y ESTADO ---
+        let currentStep = 1;
+        let score = 0;
+        const phrases = ["¡Te Amo!", "¡Preciosa!", "¡Mi Vida!", "¡Única!", "¡Juntos!", "¡Por Siempre!"];
+        const icons = ["💖", "🐮", "🐷", "🌸", "✨", "💌"];
+
+        // --- INICIALIZACIÓN DE FONDO ---
+        function createHearts() {
+            const bg = document.getElementById('bg-hearts');
+            for(let i=0; i<40; i++){
+                let heart = document.createElement('div');
+                heart.className = 'heart-float';
+                heart.innerText = Math.random() > 1 ? '❤️' : '💖';
+                heart.style.left = Math.random() * 100 + 'vw';
+                heart.style.animationDuration = (Math.random() * 5 + 5) + 's';
+                heart.style.fontSize = (Math.random() * 20 + 10) + 'px';
+                bg.appendChild(heart);
+            }
+        }
+        createHearts();
+
+        // --- MÚSICA ---
+        const music = document.getElementById('bg-music');
+        const musicBtn = document.getElementById('music-control');
+        
+        function toggleMusic() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            if(music.paused) {
+                music.play();
+                musicBtn.classList.remove('paused');
+            } else {
+                music.pause();
+                musicBtn.classList.add('paused');
+            }
+        }
+
+        // --- NAVEGACIÓN ---
+        function nextStep(step) {
+            playSfx(400, 'sine', 0.2); // Sonido de transición
+            document.querySelector('.step.active').classList.remove('active');
+            
+            if(step === 2) {
+                if(music.paused) toggleMusic();
+                startGame1();
+            }
+            if(step === 4) setupMemory();
+            if(step === 5) setupUnion();
+            if(step === 6) {
+                playSfx(600, 'sine', 0.5); 
+                launchConfetti();
+            }
+
+            setTimeout(() => {
+                document.getElementById('step-' + step).classList.add('active');
+            }, 500);
+            
+            currentStep = step;
+        }
+
+        // --- JUEGO 1: CLICKER ---
+        function startGame1() {
+            const gameLayer = document.getElementById('game-layer');
+            const step2 = document.getElementById('step-2');
+            step2.classList.add('active');
+
+            let gameInterval = setInterval(() => {
+                if(score >= 100) {
+                    clearInterval(gameInterval);
+                    gameLayer.innerHTML = '';
+                    nextStep(3);
+                } else {
+                    spawnItem();
+                }
+            }, 600);
+        }
+
+        function spawnItem() {
+            const el = document.createElement('div');
+            el.innerText = icons[Math.floor(Math.random() * icons.length)];
+            el.className = 'click-target';
+            el.style.left = Math.random() * 80 + 10 + '%';
+            el.style.top = Math.random() * 70 + 10 + '%';
+            
+            el.onclick = (e) => {
+                playSfx(800, 'sine', 0.1); // Sonido click
+                score += 10;
+                if(score > 100) score = 100;
+                document.getElementById('score').innerText = score;
+                showFloatText(e.clientX, e.clientY);
+                el.style.transform = "scale(1.5)";
+                el.style.opacity = "0";
+                setTimeout(() => el.remove(), 200);
+            };
+
+            document.getElementById('game-layer').appendChild(el);
+            setTimeout(() => { if(el.parentElement) el.remove(); }, 2000);
+        }
+
+        function showFloatText(x, y) {
+            const txt = document.createElement('div');
+            txt.innerText = phrases[Math.floor(Math.random() * phrases.length)];
+            txt.style.position = 'fixed';
+            txt.style.left = x + 'px';
+            txt.style.top = y + 'px';
+            txt.style.color = '#fff';
+            txt.style.fontWeight = 'bold';
+            txt.style.fontSize = '1.5rem';
+            txt.style.pointerEvents = 'none';
+            txt.style.textShadow = '0 0 5px #ff4d6d';
+            txt.style.transition = '1s';
+            txt.style.zIndex = 100;
+            document.body.appendChild(txt);
+            
+            setTimeout(() => {
+                txt.style.transform = 'translateY(-50px)';
+                txt.style.opacity = 0;
+            }, 50);
+            setTimeout(() => txt.remove(), 1000);
+        }
+
+        // --- JUEGO 2: MEMORIA ---
+        let flippedCards = [];
+        let matchedPairs = 0;
+        
+        function setupMemory() {
+            const board = document.getElementById('memory-board');
+            board.innerHTML = '';
+            const items = [
+                {icon: '🐮', msg: 'Mi chica de Pelo Negro🤩'}, {icon: '🐮', msg: 'Mi chica de Pelo Negro🤩'},
+                {icon: '🐷', msg: 'Para un amor tan hermoso como los Cerditos🐷'}, {icon: '🐷', msg: 'Para un amor tan hermoso como los Cerditos🐷'},
+                {icon: '💍', msg: 'Te Quiero con Cada Fibra de mi Ser🥰'}, {icon: '💍', msg: 'Te Quiero con Cada Fibra de mi Ser🥰'}
+            ];
+            items.sort(() => Math.random() - 0.5);
+
+            items.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = 'mem-card';
+                card.dataset.val = item.icon;
+                card.innerHTML = `<span>${item.icon}</span>`;
+                card.onclick = () => flipCard(card, item.msg);
+                board.appendChild(card);
+            });
+        }
+
+        function flipCard(card, msg) {
+            if(flippedCards.length < 2 && !card.classList.contains('flipped')) {
+                playSfx(500, 'triangle', 0.1); // Sonido girar
+                card.classList.add('flipped');
+                flippedCards.push(card);
+
+                if(flippedCards.length === 2) {
+                    checkMatch(msg);
+                }
+            }
+        }
+
+        function checkMatch(msg) {
+            const [c1, c2] = flippedCards;
+            if(c1.dataset.val === c2.dataset.val) {
+                playSfx(1000, 'sine', 0.2); // Sonido acierto
+                matchedPairs++;
+                document.getElementById('memory-msg').innerText = "¡" + msg + "! ❤️";
+                flippedCards = [];
+                if(matchedPairs === 3) {
+                    setTimeout(() => nextStep(5), 1500);
+                }
+            } else {
+                playSfx(200, 'sawtooth', 0.2); // Sonido error
+                setTimeout(() => {
+                    c1.classList.remove('flipped');
+                    c2.classList.remove('flipped');
+                    flippedCards = [];
+                }, 1000);
+            }
+        }
+
+        // --- JUEGO 3: UNIÓN ---
+        let unionStep = 0;
+        function setupUnion() {
+            document.getElementById('cp-1').classList.add('active');
+        }
+
+        function moveCow(targetId) {
+            if(targetId === unionStep + 1) {
+                playSfx(600, 'triangle', 0.1); // Sonido movimiento
+                unionStep++;
+                const cow = document.getElementById('cow-avatar');
+                let pos = targetId === 1 ? '33%' : (targetId === 2 ? '60%' : 'calc(100% - 50px)');
+                cow.style.left = pos;
+
+                document.getElementById('cp-' + targetId).classList.remove('active');
+                document.getElementById('cp-' + targetId).classList.add('done');
+                document.getElementById('cp-' + targetId).innerText = '✅';
+
+                if(targetId < 3) {
+                    document.getElementById('cp-' + (targetId + 1)).classList.add('active');
+                } else {
+                    setTimeout(() => nextStep(6), 1000);
+                }
+            }
+        }
+
+        // --- EFECTO FINAL: CONFETTI ---
+        function launchConfetti() {
+            const duration = 3000;
+            const end = Date.now() + duration;
+
+            (function frame() {
+                confetti({
+                    particleCount: 5,
+                    angle: 60,
+                    spread: 55,
+                    origin: { x: 0 },
+                    colors: ['#ff4d6d', '#ffccd5']
+                });
+                confetti({
+                    particleCount: 5,
+                    angle: 120,
+                    spread: 55,
+                    origin: { x: 1 },
+                    colors: ['#ff4d6d', '#ffccd5']
+                });
+
+                if (Date.now() < end) {
+                    requestAnimationFrame(frame);
+                }
+            }());
+        }
+    </script>
+</body>
+</html>
